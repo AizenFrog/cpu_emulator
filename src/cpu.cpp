@@ -9,6 +9,11 @@ cpu::cpu() : cpuProperties(), instructionPtr(nullptr), currentInstruction(nullpt
     cpuInstructions[opCode] = new instructions::load(registers.get(), memory.get(), cpuProperties); opCode += opCodeOffset;
     cpuInstructions[opCode] = new instructions::store(registers.get(), memory.get(), cpuProperties); opCode += opCodeOffset;
     cpuInstructions[opCode] = new instructions::load_immediate(registers.get(), memory.get(), cpuProperties); opCode += opCodeOffset;
+    cpuInstructions[opCode] = new instructions::addition(registers.get(), memory.get(), cpuProperties); opCode += opCodeOffset;
+    cpuInstructions[opCode] = new instructions::subtraction(registers.get(), memory.get(), cpuProperties); opCode += opCodeOffset;
+    cpuInstructions[opCode] = new instructions::multiplication(registers.get(), memory.get(), cpuProperties); opCode += opCodeOffset;
+    cpuInstructions[opCode] = new instructions::shift_right_logical(registers.get(), memory.get(), cpuProperties); opCode += opCodeOffset;
+    cpuInstructions[opCode] = new instructions::shift_left_logical(registers.get(), memory.get(), cpuProperties); opCode += opCodeOffset;
 }
 
 cpu::~cpu()

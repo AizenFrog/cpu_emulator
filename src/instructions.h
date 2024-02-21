@@ -58,4 +58,46 @@ protected:
     bool isUpper;
 };
 
+
+class math_base : public instruction_base {
+public:
+    status decodeOperands() override;
+protected:
+    math_base(const std::string& _name, cpu_register_t* const _registers, std::uint8_t* const _memory, const cpu_base_properties& _cpuProperties);
+
+    bool isImmediate;
+    std::uint32_t dstSrcRegisterIndex;
+    cpu_register_t srcData;
+};
+
+class addition : public math_base {
+public:
+    addition(cpu_register_t* const _registers, std::uint8_t* const _memory, const cpu_base_properties& _cpuProperties);
+    status executeInstruction() override;
+};
+
+class subtraction : public math_base {
+public:
+    subtraction(cpu_register_t* const _registers, std::uint8_t* const _memory, const cpu_base_properties& _cpuProperties);
+    status executeInstruction() override;
+};
+
+class multiplication : public math_base {
+public:
+    multiplication(cpu_register_t* const _registers, std::uint8_t* const _memory, const cpu_base_properties& _cpuProperties);
+    status executeInstruction() override;
+};
+
+class shift_right_logical : public math_base {
+public:
+    shift_right_logical(cpu_register_t* const _registers, std::uint8_t* const _memory, const cpu_base_properties& _cpuProperties);
+    status executeInstruction() override;
+};
+
+class shift_left_logical : public math_base {
+public:
+    shift_left_logical(cpu_register_t* const _registers, std::uint8_t* const _memory, const cpu_base_properties& _cpuProperties);
+    status executeInstruction() override;
+};
+
 }
