@@ -132,4 +132,127 @@ status load_immediate::executeInstruction()
     return status::STATUS_OK;
 }
 
+
+math_base::math_base(const std::string& _name,
+                     cpu_register_t* const _registers,
+                     std::uint8_t* const _memory,
+                     const cpu_base_properties& _cpuProperties) :
+    instruction_base(_name, _registers, _memory, _cpuProperties), isImmediate(false), dstSrcRegisterIndex(0x0), srcData(0x0) {}
+
+status math_base::decodeOperands()
+{
+    std::uint32_t isImmediateOffset =  cpuProperties.registerSize - cpuProperties.bitsPerInstruction - 1;
+    std::uint32_t dstRegisterOffset = isImmediateOffset - cpuProperties.bitsPerRegister;
+    cpu_register_t registerMask = cpuProperties.registersCount - 1;
+    cpu_register_t isImmediateBitMask = 0x1 << isImmediateOffset;
+    cpu_register_t dstRegisterMask = registerMask << dstRegisterOffset;
+
+    isImmediate = currentInstruction & isImmediateBitMask;
+    dstSrcRegisterIndex = (currentInstruction & dstRegisterMask) >> dstRegisterOffset;
+    if (isImmediate) {
+        cpu_register_t immediateValueMask = (0x1 << dstRegisterOffset) - 1;
+        srcData = getSignValue(currentInstruction & immediateValueMask, dstRegisterOffset - 1);
+    }
+    else {
+        cpu_register_t srcRegisterOffset = dstRegisterOffset - cpuProperties.bitsPerRegister;
+        cpu_register_t srcRegisterMask = registerMask << srcRegisterOffset;
+        srcData = (currentInstruction & srcRegisterMask) >> srcRegisterOffset;
+    }
+
+    return status::STATUS_OK;
+}
+
+addition::addition(cpu_register_t* const _registers, std::uint8_t* const _memory, const cpu_base_properties& _cpuProperties) :
+    math_base("add", _registers, _memory, _cpuProperties) {}
+
+status addition::executeInstruction()
+{
+    if (isImmediate)
+        registers[dstSrcRegisterIndex] += srcData;
+    else
+        registers[dstSrcRegisterIndex] += registers[srcData];
+
+    return status::STATUS_OK;
+}
+
+subtraction::subtraction(cpu_register_t* const _registers, std::uint8_t* const _memory, const cpu_base_properties& _cpuProperties) :
+    math_base("sub", _registers, _memory, _cpuProperties) {}
+
+status subtraction::executeInstruction()
+{
+    if (isImmediate)
+        registers[dstSrcRegisterIndex] -= srcData;
+    else
+        registers[dstSrcRegisterIndex] -= registers[srcData];
+
+    return status::STATUS_OK;
+}
+
+multiplication::multiplication(cpu_register_t* const _registers, std::uint8_t* const _memory, const cpu_base_properties& _cpuProperties) :
+    math_base("mul", _registers, _memory, _cpuProperties) {}
+
+status multiplication::executeInstruction()
+{
+    if (isImmediate)
+        registers[dstSrcRegisterIndex] *= srcData;
+    else
+        registers[dstSrcRegisterIndex] *= registers[srcData];
+
+    return status::STATUS_OK;
+}
+
+shift_right_logical::shift_right_logical(cpu_register_t* const _registers,
+                                         std::uint8_t* const _memory,
+                                         const cpu_base_properties& _cpuProperties) :
+    math_base("srl", _registers, _memory, _cpuProperties) {}
+
+status shift_right_logical::executeInstruction()
+{
+    if (isImmediate) {
+        if (srcData > cpuProperties.bitsPerRegister) {
+            std::cerr << "Error: shift_right_logical::executeInstruction, code - "
+                      << (int)status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH << std::endl;
+            return status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH;
+        }
+        registers[dstSrcRegisterIndex] >>= srcData;
+    }
+    else {
+        if (registers[srcData] > cpuProperties.bitsPerRegister) {
+            std::cerr << "Error: shift_right_logical::executeInstruction, code - "
+                      << (int)status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH << std::endl;
+            return status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH;
+        }
+        registers[dstSrcRegisterIndex] >>= registers[srcData];
+    }
+
+    return status::STATUS_OK;
+}
+
+shift_left_logical::shift_left_logical(cpu_register_t* const _registers,
+                                       std::uint8_t* const _memory,
+                                       const cpu_base_properties& _cpuProperties) :
+    math_base("sll", _registers, _memory, _cpuProperties) {}
+
+status shift_left_logical::executeInstruction()
+{
+    if (isImmediate) {
+        if (srcData > cpuProperties.bitsPerRegister) {
+            std::cerr << "Error: shift_left_logical::executeInstruction, code - "
+                      << (int)status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH << std::endl;
+            return status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH;
+        }
+        registers[dstSrcRegisterIndex] <<= srcData;
+    }
+    else {
+        if (registers[srcData] > cpuProperties.bitsPerRegister) {
+            std::cerr << "Error: shift_left_logical::executeInstruction, code - "
+                      << (int)status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH << std::endl;
+            return status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH;
+        }
+        registers[dstSrcRegisterIndex] <<= registers[srcData];
+    }
+
+    return status::STATUS_OK;
+}
+
 }
