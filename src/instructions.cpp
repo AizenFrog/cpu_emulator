@@ -36,25 +36,30 @@ status load::decodeOperands()
 
     dstRegisterIndex = (dstRegisterMask & currentInstruction) >> dstRegisterOffset;
     srcAddressRegisterIndex = (srcRegisterMask & currentInstruction) >> srcRegisterOffset;
-    immediateMemoryOffset = getSignValue(immediateAddressMask & currentInstruction, srcRegisterOffset - 1);
+    immediateMemoryOffset = getSignValue<cpu_register_t>(immediateAddressMask & currentInstruction, srcRegisterOffset - 1);
     return status::STATUS_OK;
 }
 
 status load::executeInstruction()
 {
-    cpu_register_t efficientAddress = registers[srcAddressRegisterIndex] + immediateMemoryOffset;
+    std::uint32_t efficientAddress;
+    if (immediateMemoryOffset & signBitMask)
+        efficientAddress = (cpu_register_t)(registers[srcAddressRegisterIndex] + immediateMemoryOffset);
+    else
+        efficientAddress = registers[srcAddressRegisterIndex] + immediateMemoryOffset;
+
     if (efficientAddress >= cpuProperties.memorySize) {
-        std::cerr << "Error: load::executeInstruction, code - " << (int)status::OUT_OF_MEMORY_ERROR << std::endl;
+        LOG("load::executeInstruction()", status::OUT_OF_MEMORY_ERROR);
         return status::OUT_OF_MEMORY_ERROR;
     }
     if (efficientAddress > cpuProperties.memorySize - sizeof(cpu_register_t)) {
-        std::uint32_t bytesToLoad = cpuProperties.memorySize - efficientAddress - 1;
+        std::uint32_t bytesToLoad = cpuProperties.memorySize - efficientAddress;
         registers[dstRegisterIndex] = 0;
         for (std::uint32_t i = 0; i < bytesToLoad; ++i)
             registers[dstRegisterIndex] |= (cpu_register_t)memory[efficientAddress + i] << (BITS_IN_BYTE * i);
 
-        std::cerr << "Warning: load::executeInstruction, code - " << (int)status::LAST_MEMORY_BYTE_WARNING << std::endl;
-        return status::OUT_OF_MEMORY_ERROR;
+        LOG("load::executeInstruction()", status::LAST_MEMORY_BYTE_WARNING);
+        return status::LAST_MEMORY_BYTE_WARNING;
     }
 
     registers[dstRegisterIndex] = *reinterpret_cast<cpu_register_t*>(&memory[efficientAddress]);
@@ -76,24 +81,29 @@ status store::decodeOperands()
 
     dstAddressRegisterIndex = (dstRegisterMask & currentInstruction) >> dstRegisterOffset;
     srcRegisterIndex = (srcRegisterMask & currentInstruction) >> srcRegisterOffset;
-    immediateMemoryOffset = getSignValue(immediateAddressMask & currentInstruction, srcRegisterOffset - 1);
+    immediateMemoryOffset = getSignValue<cpu_register_t>(immediateAddressMask & currentInstruction, srcRegisterOffset - 1);
     return status::STATUS_OK;
 }
 
 status store::executeInstruction()
 {
-    cpu_register_t efficientAddress = registers[dstAddressRegisterIndex] + immediateMemoryOffset;
+    std::uint32_t efficientAddress;
+    if (immediateMemoryOffset & signBitMask)
+        efficientAddress = (cpu_register_t)(registers[dstAddressRegisterIndex] + immediateMemoryOffset);
+    else
+        efficientAddress = registers[dstAddressRegisterIndex] + immediateMemoryOffset;
+
     if (efficientAddress >= cpuProperties.memorySize) {
-        std::cerr << "Error: store::executeInstruction, code - " << (int)status::OUT_OF_MEMORY_ERROR << std::endl;
+        LOG("store::executeInstruction()", status::OUT_OF_MEMORY_ERROR);
         return status::OUT_OF_MEMORY_ERROR;
     }
     if (efficientAddress > cpuProperties.memorySize - sizeof(cpu_register_t)) {
-        std::uint32_t bytesToStore = cpuProperties.memorySize - efficientAddress - 1;
+        std::uint32_t bytesToStore = cpuProperties.memorySize - efficientAddress;
         for (std::uint32_t i = 0; i < bytesToStore; ++i)
             memory[efficientAddress + i] = registers[srcRegisterIndex] >> (BITS_IN_BYTE * i);
 
-        std::cerr << "Warning: store::executeInstruction, code - " << (int)status::LAST_MEMORY_BYTE_WARNING << std::endl;
-        return status::OUT_OF_MEMORY_ERROR;
+        LOG("store::executeInstruction()", status::LAST_MEMORY_BYTE_WARNING);
+        return status::LAST_MEMORY_BYTE_WARNING;
     }
 
     *reinterpret_cast<cpu_register_t*>(&memory[efficientAddress]) = registers[srcRegisterIndex];
@@ -151,7 +161,7 @@ status math_base::decodeOperands()
     dstSrcRegisterIndex = (currentInstruction & dstRegisterMask) >> dstRegisterOffset;
     if (isImmediate) {
         cpu_register_t immediateValueMask = (0x1 << dstRegisterOffset) - 1;
-        srcData = getSignValue(currentInstruction & immediateValueMask, dstRegisterOffset - 1);
+        srcData = getSignValue<cpu_register_t>(currentInstruction & immediateValueMask, dstRegisterOffset - 1);
     }
     else {
         cpu_register_t srcRegisterOffset = dstRegisterOffset - cpuProperties.bitsPerRegister;
@@ -210,16 +220,14 @@ status shift_right_logical::executeInstruction()
 {
     if (isImmediate) {
         if (srcData > cpuProperties.bitsPerRegister) {
-            std::cerr << "Error: shift_right_logical::executeInstruction, code - "
-                      << (int)status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH << std::endl;
+            LOG("shift_right_logical::executeInstruction()", status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH);
             return status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH;
         }
         registers[dstSrcRegisterIndex] >>= srcData;
     }
     else {
         if (registers[srcData] > cpuProperties.bitsPerRegister) {
-            std::cerr << "Error: shift_right_logical::executeInstruction, code - "
-                      << (int)status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH << std::endl;
+            LOG("shift_right_logical::executeInstruction()", status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH);
             return status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH;
         }
         registers[dstSrcRegisterIndex] >>= registers[srcData];
@@ -237,16 +245,14 @@ status shift_left_logical::executeInstruction()
 {
     if (isImmediate) {
         if (srcData > cpuProperties.bitsPerRegister) {
-            std::cerr << "Error: shift_left_logical::executeInstruction, code - "
-                      << (int)status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH << std::endl;
+            LOG("shift_left_logical::executeInstruction()", status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH);
             return status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH;
         }
         registers[dstSrcRegisterIndex] <<= srcData;
     }
     else {
         if (registers[srcData] > cpuProperties.bitsPerRegister) {
-            std::cerr << "Error: shift_left_logical::executeInstruction, code - "
-                      << (int)status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH << std::endl;
+            LOG("shift_left_logical::executeInstruction()", status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH);
             return status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH;
         }
         registers[dstSrcRegisterIndex] <<= registers[srcData];

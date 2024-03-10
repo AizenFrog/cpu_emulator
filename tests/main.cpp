@@ -1,13 +1,6 @@
-#include <iostream>
-#include "cpu.h"
+#include "gtest/gtest.h"
 
-int main(int argc, char** argv)
-{
-    cpu core;
-    status st = status::STATUS_OK;
-    while(1) {
-        core.decodeInstruction();
-        core.executeInstruction();
-    }
-    return 0;
+int main(int argc, char** argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

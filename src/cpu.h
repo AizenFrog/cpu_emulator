@@ -22,7 +22,7 @@ private:
     instructions::instruction_base* currentInstruction;
 
     cpu_register_t statusRegister;
-    const std::unique_ptr<cpu_register_t> registers;
-    const std::unique_ptr<uint8_t> memory;
+    const std::unique_ptr<cpu_register_t[]> registers;
+    const std::unique_ptr<std::uint8_t[]> memory;
     std::map<cpu_register_t, instructions::instruction_base*> cpuInstructions;
 };
