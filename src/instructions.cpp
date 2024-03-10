@@ -219,14 +219,14 @@ shift_right_logical::shift_right_logical(cpu_register_t* const _registers,
 status shift_right_logical::executeInstruction()
 {
     if (isImmediate) {
-        if (srcData > cpuProperties.bitsPerRegister) {
+        if (srcData > cpuProperties.registerSize) {
             LOG("shift_right_logical::executeInstruction()", status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH);
             return status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH;
         }
         registers[dstSrcRegisterIndex] >>= srcData;
     }
     else {
-        if (registers[srcData] > cpuProperties.bitsPerRegister) {
+        if (registers[srcData] > cpuProperties.registerSize) {
             LOG("shift_right_logical::executeInstruction()", status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH);
             return status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH;
         }
@@ -244,14 +244,14 @@ shift_left_logical::shift_left_logical(cpu_register_t* const _registers,
 status shift_left_logical::executeInstruction()
 {
     if (isImmediate) {
-        if (srcData > cpuProperties.bitsPerRegister) {
+        if (srcData > cpuProperties.registerSize) {
             LOG("shift_left_logical::executeInstruction()", status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH);
             return status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH;
         }
         registers[dstSrcRegisterIndex] <<= srcData;
     }
     else {
-        if (registers[srcData] > cpuProperties.bitsPerRegister) {
+        if (registers[srcData] > cpuProperties.registerSize) {
             LOG("shift_left_logical::executeInstruction()", status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH);
             return status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH;
         }
