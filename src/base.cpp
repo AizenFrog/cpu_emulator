@@ -12,4 +12,4 @@ cpu_base_properties::cpu_base_properties(const std::uint32_t _maxInstructionsCou
     bitsPerInstruction(log2(maxInstructionsCount)),
     bitsPerRegister(log2(registersCount)),
     instructionMask(0xffffffffffffffff << (registerSize - bitsPerInstruction)), // 0xff.. is long because of 64-bit cpu in future
-    memorySize((std::uint32_t)((cpu_register_t)-1) + 1) {}
+    memorySize(maxSupportedMemory) {}

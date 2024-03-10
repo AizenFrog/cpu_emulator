@@ -7,6 +7,10 @@
 
 using cpu_register_t = std::uint16_t;
 
+constexpr std::uint64_t maxSupportedMemory = (std::uint64_t)((cpu_register_t)-1) + 1;
+constexpr std::uint32_t signBitIndex = (sizeof(cpu_register_t) * 8) - 1;
+constexpr cpu_register_t signBitMask = 0x1 << signBitIndex;
+
 enum class status : std::int32_t {
     UNKNOWN_ERROR = -1000,
     DECODE_UNKNOWN_INSTRUCTION,
@@ -14,16 +18,27 @@ enum class status : std::int32_t {
     OUT_OF_MEMORY_ERROR,
     SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH,
     UNKNOWN_WARNING = -500,
-    LAST_MEMORY_BYTE_WARNING, // if load 16K - 1 byte, because load at least 2 bytes
+    LAST_MEMORY_BYTE_WARNING, // if load 64K - 1 byte, because load at least 2 bytes
     STATUS_OK = 0
 };
 
-inline cpu_register_t getSignValue(cpu_register_t value, std::uint32_t lastBitIndex)
+#ifdef LOGGING
+#define LOG(function, code)                                         \
+    if ((int)(code) < 500)                                          \
+        std::cerr << "Error: " function ", " #code << std::endl;    \
+    else                                                            \
+        std::cerr << "Warning: " function ", " #code << std::endl;
+#else
+#define LOG(function, code)
+#endif
+
+template <typename T>
+inline T getSignValue(T value, std::uint32_t lastBitIndex)
 {
-    cpu_register_t mainValueMask = (0x1 << lastBitIndex) - 1;
-    cpu_register_t result = value & mainValueMask;
+    T mainValueMask = (0x1 << lastBitIndex) - 1;
+    T result = value & mainValueMask;
     if (value & (0x1 << lastBitIndex))
-        result = result | ((cpu_register_t)-1 << lastBitIndex);
+        result = result | ((T)-1 << lastBitIndex);
     return result;
 }
 
