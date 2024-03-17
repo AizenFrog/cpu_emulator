@@ -100,4 +100,41 @@ public:
     status executeInstruction() override;
 };
 
+class bitwise_not : public instruction_base {
+public:
+    bitwise_not(cpu_register_t* const _registers, std::uint8_t* const _memory, const cpu_base_properties& _cpuProperties);
+    status decodeOperands() override;
+    status executeInstruction() override;
+protected:
+    std::uint32_t dstSrcRegisterIndex;
+};
+
+class bitwise_base : public instruction_base {
+public:
+    status decodeOperands() override;
+protected:
+    bitwise_base(const std::string& _name, cpu_register_t* const _registers, std::uint8_t* const _memory, const cpu_base_properties& _cpuProperties);
+
+    std::uint32_t dstRegisterIndex;
+    std::uint32_t srcRegisterIndex;
+};
+
+class bitwise_and : public bitwise_base {
+public:
+    bitwise_and(cpu_register_t* const _registers, std::uint8_t* const _memory, const cpu_base_properties& _cpuProperties);
+    status executeInstruction() override;
+};
+
+class bitwise_or : public bitwise_base {
+public:
+    bitwise_or(cpu_register_t* const _registers, std::uint8_t* const _memory, const cpu_base_properties& _cpuProperties);
+    status executeInstruction() override;
+};
+
+class bitwise_xor : public bitwise_base {
+public:
+    bitwise_xor(cpu_register_t* const _registers, std::uint8_t* const _memory, const cpu_base_properties& _cpuProperties);
+    status executeInstruction() override;
+};
+
 }

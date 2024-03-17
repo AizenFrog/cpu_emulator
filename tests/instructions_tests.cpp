@@ -502,3 +502,52 @@ TEST_F(InstructionsTests, shift_left_logical_negative)
 
     EXPECT_EQ(st, status::SHIFT_BY_NEGATIVE_VALUE_OR_VALUE_MORE_THAN_CPU_BIT_DEPTH);
 }
+
+TEST_F(InstructionsTests, bitwise_not)
+{
+    instructions::bitwise_not instruction(registers.get(), memory.get(), properties);
+    registers[0] = 0b0101'0101'0101'0101;
+    DECODE_AND_EXECUTE(st);
+
+    EXPECT_EQ(st, status::STATUS_OK);
+    EXPECT_EQ(registers[0], 0b1010'1010'1010'1010);
+}
+
+TEST_F(InstructionsTests, bitwise_and)
+{
+    instructions::bitwise_and instruction(registers.get(), memory.get(), properties);
+    cpu_register_t currentInstruction = 0b0000'0000'0100'0000; // dst register 0, src register 1
+    instruction.setCurrentInstruction(currentInstruction);
+    registers[0] = 164;
+    registers[1] = 21;
+    DECODE_AND_EXECUTE(st);
+
+    EXPECT_EQ(st, status::STATUS_OK);
+    EXPECT_EQ(registers[0], 4);
+}
+
+TEST_F(InstructionsTests, bitwise_or)
+{
+    instructions::bitwise_or instruction(registers.get(), memory.get(), properties);
+    cpu_register_t currentInstruction = 0b0000'0000'0100'0000; // dst register 0, src register 1
+    instruction.setCurrentInstruction(currentInstruction);
+    registers[0] = 164;
+    registers[1] = 21;
+    DECODE_AND_EXECUTE(st);
+
+    EXPECT_EQ(st, status::STATUS_OK);
+    EXPECT_EQ(registers[0], 181);
+}
+
+TEST_F(InstructionsTests, bitwise_xor)
+{
+    instructions::bitwise_xor instruction(registers.get(), memory.get(), properties);
+    cpu_register_t currentInstruction = 0b0000'0000'0100'0000; // dst register 0, src register 1
+    instruction.setCurrentInstruction(currentInstruction);
+    registers[0] = 164;
+    registers[1] = 21;
+    DECODE_AND_EXECUTE(st);
+
+    EXPECT_EQ(st, status::STATUS_OK);
+    EXPECT_EQ(registers[0], 177);
+}

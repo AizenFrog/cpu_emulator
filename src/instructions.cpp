@@ -261,4 +261,66 @@ status shift_left_logical::executeInstruction()
     return status::STATUS_OK;
 }
 
+bitwise_not::bitwise_not(cpu_register_t* const _registers, std::uint8_t* const _memory, const cpu_base_properties& _cpuProperties) :
+    instruction_base("not", _registers, _memory, _cpuProperties) {}
+
+status bitwise_not::decodeOperands()
+{
+    cpu_register_t registerMask = cpuProperties.registersCount - 1;
+    std::uint32_t dstSrcRegisterOffset = cpuProperties.registerSize - cpuProperties.bitsPerInstruction - cpuProperties.bitsPerRegister;
+    cpu_register_t dstSrcRegisterMask = registerMask << dstSrcRegisterOffset;
+
+    dstSrcRegisterIndex = (currentInstruction & dstSrcRegisterMask) >> dstSrcRegisterOffset;
+    return status::STATUS_OK;
+}
+
+status bitwise_not::executeInstruction()
+{
+    registers[dstSrcRegisterIndex] = ~registers[dstSrcRegisterIndex];
+    return status::STATUS_OK;
+}
+
+bitwise_base::bitwise_base(const std::string& _name, cpu_register_t* const _registers, std::uint8_t* const _memory, const cpu_base_properties& _cpuProperties) :
+    instruction_base(_name, _registers, _memory, _cpuProperties), dstRegisterIndex(0x0), srcRegisterIndex(0x0) {}
+
+status bitwise_base::decodeOperands()
+{
+    cpu_register_t registerMask = cpuProperties.registersCount - 1;
+    std::uint32_t dstRegisterOffset = cpuProperties.registerSize - cpuProperties.bitsPerInstruction - cpuProperties.bitsPerRegister;
+    std::uint32_t srcRegisterOffset = dstRegisterOffset - cpuProperties.bitsPerRegister;
+    cpu_register_t dstRegisterMask = registerMask << dstRegisterOffset;
+    cpu_register_t srcRegisterMask = registerMask << srcRegisterOffset;
+
+    dstRegisterIndex = (currentInstruction & dstRegisterMask) >> dstRegisterOffset;
+    srcRegisterIndex = (currentInstruction & srcRegisterMask) >> srcRegisterOffset;
+    return status::STATUS_OK;
+}
+
+bitwise_and::bitwise_and(cpu_register_t* const _registers, std::uint8_t* const _memory, const cpu_base_properties& _cpuProperties) :
+    bitwise_base("and", _registers, _memory, _cpuProperties) {}
+
+status bitwise_and::executeInstruction()
+{
+    registers[dstRegisterIndex] &= registers[srcRegisterIndex];
+    return status::STATUS_OK;
+}
+
+bitwise_or::bitwise_or(cpu_register_t* const _registers, std::uint8_t* const _memory, const cpu_base_properties& _cpuProperties) :
+    bitwise_base("or", _registers, _memory, _cpuProperties) {}
+
+status bitwise_or::executeInstruction()
+{
+    registers[dstRegisterIndex] |= registers[srcRegisterIndex];
+    return status::STATUS_OK;
+}
+
+bitwise_xor::bitwise_xor(cpu_register_t* const _registers, std::uint8_t* const _memory, const cpu_base_properties& _cpuProperties) :
+    bitwise_base("xor", _registers, _memory, _cpuProperties) {}
+
+status bitwise_xor::executeInstruction()
+{
+    registers[dstRegisterIndex] ^= registers[srcRegisterIndex];
+    return status::STATUS_OK;
+}
+
 }
